@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate, useParams } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Copy, Users, LogOut } from "lucide-react";
@@ -18,7 +18,7 @@ function RoomPage() {
   const [joined, setJoined] = useState(false);
   useEffect(() => {
     const stored = typeof window !== "undefined" ? localStorage.getItem("muse_username") : null;
-    setUserName(stored || "Guest " + Math.floor(Math.random() * 1000));
+    setUserName(stored || "");
   }, []);
   const [instrument, setInstrument] = useState<InstrumentKey>("Piano");
 
@@ -36,7 +36,9 @@ function RoomPage() {
 
   const handleJoin = (e: React.FormEvent) => {
     e.preventDefault();
-    localStorage.setItem("muse_username", userName);
+    const normalizedName = userName.trim() || `Guest ${Math.floor(Math.random() * 1000)}`;
+    setUserName(normalizedName);
+    localStorage.setItem("muse_username", normalizedName);
     setJoined(true);
   };
 
@@ -69,8 +71,8 @@ function RoomPage() {
                 type="text"
                 value={userName}
                 onChange={(e) => setUserName(e.target.value)}
+                placeholder="Your display name"
                 className="w-full mt-1 bg-black/5 border border-black/10 rounded-xl px-4 py-3 outline-none focus:border-primary transition-colors text-foreground"
-                required
                 maxLength={20}
               />
             </div>
