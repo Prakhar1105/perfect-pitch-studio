@@ -88,6 +88,7 @@ function RoomPage() {
                 <option value="Violin">Violin</option>
                 <option value="Flute">Flute</option>
                 <option value="Sitar">Sitar</option>
+                <option value="Veena">Veena</option>
                 <option value="Drums">Drum Kit</option>
               </select>
             </div>
@@ -125,7 +126,7 @@ function RoomPage() {
         </div>
       </div>
 
-      <div className="grid lg:grid-cols-[280px,1fr] gap-6">
+      <div className="grid gap-6 lg:grid-cols-[280px_minmax(0,1fr)]">
         {/* Participants Sidebar */}
         <div className="glass-strong rounded-3xl p-5 h-fit flex flex-col gap-4">
           <div className="flex items-center gap-2 font-semibold text-sm uppercase tracking-wider text-muted-foreground border-b border-white/5 pb-3">
@@ -155,10 +156,11 @@ function RoomPage() {
               >
                 <option value="Piano">Grand Piano</option>
                 <option value="Guitar">Acoustic Guitar</option>
-                <option value="Violin">Violin</option>
-                <option value="Flute">Flute</option>
-                <option value="Sitar">Sitar</option>
-                <option value="Drums">Drum Kit</option>
+                 <option value="Violin">Violin</option>
+                 <option value="Flute">Flute</option>
+                 <option value="Sitar">Sitar</option>
+                 <option value="Veena">Veena</option>
+                 <option value="Drums">Drum Kit</option>
             </select>
           </div>
         </div>
