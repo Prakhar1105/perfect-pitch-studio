@@ -17,18 +17,25 @@ type Props = {
   isDrum: boolean;
   tempoScale?: number;
   instrument?: InstrumentKey;
+  bpm?: number;
 };
 
 type InputMode = "mic" | "virtual";
 
 
-const DURATION_MS: Record<string, number> = {
-  "16n": 150,
-  "8n": 300,
-  "4n": 600,
-  "2n": 1200,
-  "1n": 2400,
+const DURATION_BEATS: Record<string, number> = {
+  "16n": 0.25,
+  "8n": 0.5,
+  "4n": 1,
+  "2n": 2,
+  "1n": 4,
 };
+
+function getDurationMs(duration: SongNote["duration"], bpm: number) {
+  const safeBpm = Math.max(40, bpm || 90);
+  const quarterNoteMs = 60000 / safeBpm;
+  return quarterNoteMs * (DURATION_BEATS[duration ?? "8n"] ?? 0.5);
+}
 
 type LaneNote = SongNote & {
   index: number;
@@ -55,7 +62,7 @@ const LANE_COLORS = [
   "from-fuchsia-400 to-purple-600",
 ];
 
-export function GamifiedPractice({ notes, isDrum, tempoScale = 1, instrument = "Piano" }: Props) {
+export function GamifiedPractice({ notes, isDrum, tempoScale = 1, instrument = "Piano", bpm = 90 }: Props) {
   const [inputMode, setInputMode] = useState<InputMode>("mic");
 
   const [gameSpeed, setGameSpeed] = useState(1); // in-game speed multiplier
@@ -65,7 +72,7 @@ export function GamifiedPractice({ notes, isDrum, tempoScale = 1, instrument = "
   const laneNotes = useMemo<LaneNote[]>(() => {
     let cursor = 0;
     return notes.map((n, i) => {
-      const dur = (DURATION_MS[n.duration ?? "8n"] ?? 300) / effectiveScale;
+      const dur = getDurationMs(n.duration, bpm) / effectiveScale;
       const startMs = cursor;
       cursor += dur;
       const midi = !isDrum ? noteNameToMidi(n.note) : null;
@@ -80,7 +87,7 @@ export function GamifiedPractice({ notes, isDrum, tempoScale = 1, instrument = "
         status: "pending" as const,
       };
     });
-  }, [notes, isDrum, effectiveScale]);
+  }, [notes, isDrum, effectiveScale, bpm]);
 
   const totalMs = laneNotes.at(-1)?.endMs ?? 0;
 
