@@ -3,7 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useMutation } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { Music2, Play, Pause, RotateCcw, Sparkles, Loader2 } from "lucide-react";
+import { Music2, Play, Pause, RotateCcw, Sparkles, Loader2, Youtube } from "lucide-react";
 import { toast } from "sonner";
 import { learnSong, type SongResult, type SongNote } from "@/lib/song.functions";
 import type { InstrumentKey } from "@/lib/instruments";
@@ -221,6 +221,17 @@ function LearnPage() {
                 </div>
                 {data.notesAbout && (
                   <p className="text-xs text-muted-foreground mt-2 italic">{data.notesAbout}</p>
+                )}
+                {data.reference && (
+                  <a
+                    href={data.reference}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-2 inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
+                  >
+                    <Youtube className="h-3.5 w-3.5" />
+                    Listen to the original on YouTube
+                  </a>
                 )}
               </div>
               <div className="flex items-center gap-2">
