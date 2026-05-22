@@ -329,14 +329,53 @@ function makePool(key: string, voices: number, factory: () => Tone.PluckSynth, d
 }
 
 export function getSitar() {
-  return makePool("sitar", 10,
-    () => new Tone.PluckSynth({ attackNoise: 2.5, dampening: 2500, resonance: 0.95 }),
-    3.2, 0.4);
+  if (cache.has("sitar")) return cache.get("sitar")!;
+  // Sitar: bright metallic plucks + sympathetic-string drone shimmer
+  const rev = new Tone.Reverb({ decay: 3.4, wet: 0.42 });
+  const chorus = new Tone.Chorus({ frequency: 0.6, delayTime: 4, depth: 0.5, wet: 0.35 }).start();
+  const hp = new Tone.Filter({ type: "highpass", frequency: 180 });
+  chorus.chain(hp, rev, out());
+  const pool: Tone.PluckSynth[] = [];
+  for (let i = 0; i < 10; i++) {
+    const p = new Tone.PluckSynth({ attackNoise: 3.2, dampening: 3200, resonance: 0.985 });
+    p.connect(chorus);
+    pool.push(p);
+  }
+  let i = 0;
+  const inst: AnyInst = {
+    triggerAttackRelease: (n, d) => {
+      notifyLocalNote("sitar", String(n));
+      pool[i].triggerAttackRelease(n, d);
+      i = (i + 1) % pool.length;
+    },
+    dispose: () => pool.forEach((p) => p.dispose()),
+  };
+  cache.set("sitar", inst);
+  return inst;
 }
 export function getVeena() {
-  return makePool("veena", 10,
-    () => new Tone.PluckSynth({ attackNoise: 1.8, dampening: 1800, resonance: 0.97 }),
-    3.6, 0.45);
+  if (cache.has("veena")) return cache.get("veena")!;
+  // Veena: warmer, woodier than sitar — softer attack, lower dampening
+  const rev = new Tone.Reverb({ decay: 3.8, wet: 0.46 });
+  const lp = new Tone.Filter({ type: "lowpass", frequency: 3200, Q: 0.7 });
+  lp.chain(rev, out());
+  const pool: Tone.PluckSynth[] = [];
+  for (let i = 0; i < 10; i++) {
+    const p = new Tone.PluckSynth({ attackNoise: 1.4, dampening: 1600, resonance: 0.99 });
+    p.connect(lp);
+    pool.push(p);
+  }
+  let i = 0;
+  const inst: AnyInst = {
+    triggerAttackRelease: (n, d) => {
+      notifyLocalNote("veena", String(n));
+      pool[i].triggerAttackRelease(n, d);
+      i = (i + 1) % pool.length;
+    },
+    dispose: () => pool.forEach((p) => p.dispose()),
+  };
+  cache.set("veena", inst);
+  return inst;
 }
 
 export function triggerDrum(pad: "kick" | "snare" | "hat" | "tom") {

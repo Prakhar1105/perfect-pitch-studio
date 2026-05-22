@@ -18,6 +18,7 @@ const ResponseSchema = z.object({
   tempo: z.number().min(40).max(220).optional().default(90),
   notes: z.array(NoteSchema).min(4).max(400),
   notesAbout: z.string().optional().default(""),
+  reference: z.string().optional().default(""),
 });
 
 export type SongNote = z.infer<typeof NoteSchema>;
@@ -46,11 +47,11 @@ export const learnSong = createServerFn({ method: "POST" })
           {
             role: "system",
             content:
-              "You are an expert music transcriber. You know Western pop/rock/classical AND Indian music (Bollywood, Hindustani/Carnatic classical, folk, regional). You map sargam to Western notation (Sa=C, Re=D, Ga=E, Ma=F, Pa=G, Dha=A, Ni=B; komal=♭, tivra=♯). Transcribe a longer, faithful arrangement so the listener can play through the whole song. Always respond via the provided tool.",
+              "You are a professional ear-training transcriber with deep recall of famous recordings (Western pop/rock/classical AND Indian Bollywood, Hindustani/Carnatic, folk, regional). You map sargam to Western pitches (Sa=C, Re=D, Ga=E, Ma=F, Pa=G, Dha=A, Ni=B; komal=♭, tivra=♯). Before answering, INTERNALLY commit to ONE specific famous recorded version (name the artist/film/year in 'notesAbout') and transcribe THAT recording's actual melody — not a generic AI-style improvisation. Preserve the recording's real key, tempo, and characteristic phrasing (ornaments, sustains, rests, anacrusis). Always respond via the provided tool.",
           },
           {
             role: "user",
-            content: `Transcribe an EXTENDED arrangement of "${data.song}" for a virtual ${data.instrument}. ${noteHint}\n\nRequirements:\n- 80 to 150 notes covering THREE sections in order: (1) intro / mukhda hook, (2) verse / antara, (3) chorus / second hook repeat.\n- Use the song's real key/raga; vary durations across 16n / 8n / 4n / 2n for natural rhythm — do NOT flatten everything to 8n.\n- Add short transliterated 'lyric' syllables on vocal notes; leave empty for instrumental.\n- If ambiguous, pick the most famous version and name it in 'notesAbout' (e.g. film + year + singer for Indian songs).`,
+            content: `Transcribe the ICONIC recorded melody of "${data.song}" for a virtual ${data.instrument} so it is INSTANTLY recognizable when played back. ${noteHint}\n\nRequirements:\n- 80 to 150 notes covering THREE sections in order: (1) intro / mukhda hook, (2) verse / antara, (3) chorus / second hook repeat.\n- Match the REAL recording's key/raga and tempo (BPM) — do not transpose for convenience.\n- Vary durations across 16n / 8n / 4n / 2n / 1n for natural phrasing. Use 1n / 2n for held final notes of phrases. Insert 'rest' is NOT allowed — instead extend the previous note's duration to leave space between phrases.\n- Capture characteristic ornaments: grace notes before strong beats, sustained vibrato endings, signature interval leaps from the original hook.\n- Add short transliterated 'lyric' syllables on vocal notes; leave empty for instrumental.\n- 'notesAbout' MUST name the specific recording (artist + year, or film + year + singer for Indian songs).\n- 'reference' MUST be a YouTube search URL of the form https://www.youtube.com/results?search_query=<url-encoded artist + song> so the learner can A/B compare with the original.`,
           },
         ],
         tools: [
@@ -67,6 +68,7 @@ export const learnSong = createServerFn({ method: "POST" })
                   key: { type: "string", description: "Musical key, e.g. 'C major'." },
                   tempo: { type: "number", description: "BPM, 40-220." },
                   notesAbout: { type: "string", description: "Short note about the transcription or alternate match." },
+                  reference: { type: "string", description: "YouTube search URL for the original recording." },
                   notes: {
                     type: "array",
                     items: {
@@ -81,7 +83,7 @@ export const learnSong = createServerFn({ method: "POST" })
                     },
                   },
                 },
-                required: ["title", "key", "tempo", "notes", "notesAbout"],
+                required: ["title", "key", "tempo", "notes", "notesAbout", "reference"],
               },
             },
           },
