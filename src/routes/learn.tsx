@@ -17,6 +17,7 @@ import {
   getFlute,
   getSitar,
   getVeena,
+  preloadInstrument,
   triggerDrum,
 } from "@/lib/audio-engine";
 
@@ -32,13 +33,19 @@ export const Route = createFileRoute("/learn")({
 
 const INSTRUMENTS: InstrumentKey[] = ["Piano", "Guitar", "Violin", "Flute", "Sitar", "Veena", "Drums"];
 
-const DURATION_MS: Record<string, number> = {
-  "16n": 150,
-  "8n": 300,
-  "4n": 600,
-  "2n": 1200,
-  "1n": 2400,
+const DURATION_BEATS: Record<string, number> = {
+  "16n": 0.25,
+  "8n": 0.5,
+  "4n": 1,
+  "2n": 2,
+  "1n": 4,
 };
+
+function getDurationMs(duration: SongNote["duration"], bpm: number) {
+  const safeBpm = Math.max(40, bpm || 90);
+  const quarterNoteMs = 60000 / safeBpm;
+  return quarterNoteMs * (DURATION_BEATS[duration ?? "8n"] ?? 0.5);
+}
 
 function getInstrument(kind: InstrumentKey) {
   switch (kind) {
@@ -71,14 +78,11 @@ function LearnPage() {
   const [currentIdx, setCurrentIdx] = useState(-1);
   const [playing, setPlaying] = useState(false);
   const timers = useRef<number[]>([]);
-  const result = useRef<SongResult | null>(null);
-
   const learn = useServerFn(learnSong);
   const mutation = useMutation({
     mutationFn: (input: { song: string; instrument: InstrumentKey }) =>
       learn({ data: input }),
     onSuccess: (data) => {
-      result.current = data;
       stopPlayback();
     },
     onError: (err: Error) => toast.error(err.message || "Could not fetch song"),
@@ -99,6 +103,7 @@ function LearnPage() {
 
   async function start(fromIdx = 0) {
     if (!data) return;
+    await preloadInstrument(instrument);
     await ensureAudio();
     clearTimers();
     setPlaying(true);
@@ -106,7 +111,7 @@ function LearnPage() {
     for (let i = fromIdx; i < data.notes.length; i++) {
       const n = data.notes[i];
       const delay = cursor;
-      cursor += (DURATION_MS[n.duration ?? "8n"] ?? 300) / tempoScale;
+      cursor += getDurationMs(n.duration, data.tempo) / tempoScale;
       timers.current.push(
         window.setTimeout(() => {
           setCurrentIdx(i);
@@ -123,6 +128,11 @@ function LearnPage() {
   }
 
   useEffect(() => () => clearTimers(), []);
+
+  useEffect(() => {
+    if (!data) return;
+    preloadInstrument(instrument).catch(() => undefined);
+  }, [data, instrument]);
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -287,7 +297,7 @@ function LearnPage() {
             </div>
           </div>
 
-          <GamifiedPractice notes={data.notes} isDrum={instrument === "Drums"} tempoScale={tempoScale} instrument={instrument} />
+          <GamifiedPractice notes={data.notes} isDrum={instrument === "Drums"} tempoScale={tempoScale} instrument={instrument} bpm={data.tempo} />
 
           <div className="space-y-2">
             <div className="flex items-center gap-2 px-1">
